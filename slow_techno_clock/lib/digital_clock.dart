@@ -3,32 +3,29 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:math';
 
-import 'package:flutter_clock_helper/model.dart';
+import 'package:digital_clock/trapezoid_border.dart';
+import 'package:digital_clock/weather_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_clock_helper/model.dart';
 import 'package:intl/intl.dart';
 
-enum _Element {
-  background,
-  text,
-  shadow,
-}
+import 'clock_background_painter.dart';
+import 'clock_theme.dart';
 
-final _lightTheme = {
-  _Element.background: Color(0xFF81B3FE),
-  _Element.text: Colors.white,
-  _Element.shadow: Colors.black,
-};
+final _lightTheme = ClockTheme(
+    foreground: Colors.lightBlueAccent,
+    background: Colors.white,
+    digitGlow: 25,
+    iconGlow: 40);
 
-final _darkTheme = {
-  _Element.background: Colors.black,
-  _Element.text: Colors.white,
-  _Element.shadow: Color(0xFF174EA6),
-};
+final _darkTheme = ClockTheme(
+    foreground: Colors.lightBlueAccent,
+    background: Colors.black,
+    digitGlow: 25,
+    iconGlow: 35);
 
-/// A basic digital clock.
-///
-/// You can do better than this!
 class DigitalClock extends StatefulWidget {
   const DigitalClock(this.model);
 
@@ -93,39 +90,162 @@ class _DigitalClockState extends State<DigitalClock> {
     });
   }
 
+  Widget _twoDigitWrap(String twoDigitString, Size size) {
+    return SizedBox.fromSize(
+        size: size,
+        child: Flex(direction: Axis.horizontal, children: [
+          Expanded(
+              child: Text(
+            twoDigitString.substring(0, 1),
+            textAlign: TextAlign.center,
+          )),
+          Expanded(
+              child: Text(
+            twoDigitString.substring(1),
+            textAlign: TextAlign.center,
+          ))
+        ]));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).brightness == Brightness.light
+    final clockTheme = Theme.of(context).brightness == Brightness.light
         ? _lightTheme
         : _darkTheme;
+
+    final date = DateFormat('yyyy MMM dd EEE').format(_dateTime);
+    final temperature =
+        ('${widget.model.low.toStringAsFixed(1)} - ${widget.model.highString}');
+
     final hour =
         DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
     final minute = DateFormat('mm').format(_dateTime);
-    final fontSize = MediaQuery.of(context).size.width / 3.5;
-    final offset = -fontSize / 7;
+
+    final fontSize = MediaQuery.of(context).size.width / 4;
+    final clockHeight = MediaQuery.of(context).size.width * 3 / 5;
+    final fontHeight = 131.0;
+
+    // height positions of digits
+    final heightOffset = 16.0;
+
+    final minHeight = heightOffset;
+    final maxHeight = (clockHeight - fontHeight) - heightOffset;
+
+    final hrHeight = (maxHeight - minHeight) * _dateTime.hour / 24 + minHeight;
+    final minsHeight =
+        (maxHeight - minHeight) * _dateTime.minute / 60 + minHeight;
+
+    final boxShadows = [
+      BoxShadow(
+        blurRadius: clockTheme.iconGlow,
+        color: clockTheme.foreground,
+        offset: Offset(0, 0),
+      ),
+    ];
+
     final defaultStyle = TextStyle(
-      color: colors[_Element.text],
-      fontFamily: 'PressStart2P',
+      color: clockTheme.foreground,
+      fontFamily: 'Audiowide',
       fontSize: fontSize,
       shadows: [
         Shadow(
-          blurRadius: 0,
-          color: colors[_Element.shadow],
-          offset: Offset(10, 0),
+          blurRadius: clockTheme.digitGlow,
+          color: clockTheme.foreground,
+          offset: Offset(0, 0),
         ),
       ],
     );
 
-    return Container(
-      color: colors[_Element.background],
-      child: Center(
-        child: DefaultTextStyle(
-          style: defaultStyle,
-          child: Stack(
-            children: <Widget>[
-              Positioned(left: offset, top: 0, child: Text(hour)),
-              Positioned(right: offset, bottom: offset, child: Text(minute)),
-            ],
+    return ClipRect(
+      child: Container(
+        color: clockTheme.background,
+        child: Center(
+          child: DefaultTextStyle(
+            style: defaultStyle,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Transform(
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, -0.002)
+                      ..rotateX(pi / 4),
+                    alignment: Alignment.center,
+                    child: CustomPaint(
+                      painter: ClockBackgroundPainter(clockTheme.foreground),
+                    ),
+                  ),
+                ),
+                Positioned(
+                    left: 0,
+                    top: hrHeight,
+                    child: _twoDigitWrap(
+                        hour,
+                        Size(MediaQuery.of(context).size.width / 2,
+                            fontHeight))),
+                Positioned(
+                    right: 0,
+                    top: minsHeight,
+                    child: _twoDigitWrap(
+                        minute,
+                        Size(MediaQuery.of(context).size.width / 2,
+                            fontHeight))),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: CustomPaint(
+                    painter: TrapezoidPaint(
+                        snapTo: SnapTo.top,
+                        backgroundPaint: Paint()
+                          ..color = clockTheme.background.withAlpha(150),
+                        borderPaint: Paint()
+                          ..color = clockTheme.foreground
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 4.0),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    date,
+                    textAlign: TextAlign.center,
+                    style: defaultStyle.copyWith(fontSize: 24),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: CustomPaint(
+                    painter: TrapezoidPaint(
+                        snapTo: SnapTo.bottom,
+                        backgroundPaint: Paint()
+                          ..color = clockTheme.background.withAlpha(150),
+                        borderPaint: Paint()
+                          ..color = clockTheme.foreground
+                          ..style = PaintingStyle.stroke
+                          ..strokeWidth = 4.0),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    constraints: BoxConstraints(maxHeight: 32),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        WeatherIcon(
+                          condition: widget.model.weatherCondition,
+                          color: clockTheme.foreground,
+                          boxShadows: boxShadows,
+                        ),
+                        Text(
+                          temperature,
+                          textAlign: TextAlign.center,
+                          style: defaultStyle.copyWith(fontSize: 24),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

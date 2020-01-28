@@ -11,6 +11,7 @@ dependencies:
   flutter_clock_helper:
     path: ../flutter_clock_helper
   cupertino_icons: ^0.1.2
+  weather_icons: 2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -19,6 +20,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: PressStart2P
+    - family: Audiowide
       fonts:
-        - asset: third_party/PressStart2P-Regular.ttf
+        - asset: third_party/fonts/Audiowide-en4g.ttf
