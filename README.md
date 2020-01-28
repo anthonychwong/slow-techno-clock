@@ -1,15 +1,16 @@
-# Flutter Clock
+# Slow Techno Clock
 
-Welcome to Flutter Clock!
+Welcome to Slow Techno Clock!
 
-See [flutter.dev/clock](https://flutter.dev/clock) for how to get started, submission requirements, contest rules, and FAQs.
+This clock comes with light theme and dark theme
 
-See a [live demo](https://maryx.github.io/flutter_clock) with Flutter for Web!
+<img src='light.png'> <img src='dark.png'>
 
-Example [Analog Clock](analog_clock)
+## Run this clock
 
-<img src='analog_clock/analog.gif' width='350'>
+Following are the steps to run the clock
 
-Example [Digital Clock](digital_clock)
-
-<img src='digital_clock/digital.gif' width='350'>
+1. clone the repo
+2. use shell and chang working directory to `slow_techno_clock`, e.g. `cd ./slow_techno_clock`
+3. `flutter create .`
+4. `flutter run`
